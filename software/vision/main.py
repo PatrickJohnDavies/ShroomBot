@@ -1,7 +1,7 @@
 from http.client import OK
 from typing import Optional
 from enum import Enum
-
+from service import get_n_frame, get_mushrooms_coordinates
 from fastapi import FastAPI
 
 app = FastAPI()
@@ -17,18 +17,18 @@ class AnalyzeStatus(Enum):
 
 @app.get("/")
 async def read_root():
-    return {"Hello": "World"}
+    return {"JoJo": "World"}
 
 @app.get("/mushrooms")
-async def read_mushrooms(item_id: int, q: Optional[str] = None):
-    # returns maintaiend 
-    return {"mushrooms": [{'id': 0}, {'id': 1}, {'id': 2}, {'id': 3}]}
+async def read_mushrooms():
+    '''Returns mushrooms caps coordinates on an image in 
+    '''
+    img = get_n_frame(1)
+    mushrooms_coordinates = get_mushrooms_coordinates(img)
+    return {'frame': str(mushrooms_coordinates)}
 
 @app.get("/analyze")
 async def read_analyze(item_id: int, q: Optional[str] = None):
     # call background tasks that calls the cv module that processes the image and send back and image
     # cc: https://fastapi.tiangolo.com/tutorial/background-tasks/ 
     return {"status": OK}
-
-
-print("this is awesome")
