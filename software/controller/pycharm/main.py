@@ -26,24 +26,6 @@ class State(Enum):
     STOP = auto()
     RESTART = auto()
 
-def findPortOfModule(logger, name):
-    logger.debug("findPortOfModule: name = " + name)
-    port_selected = -1
-    r = zeroconf.Zeroconf()
-    logger.debug("2. Testing query of service information...")
-    service_info = r.get_service_info("_http._tcp.local.", "ZOE._http._tcp.local.")
-    logger.debug("   ZOE service: %s" % (service_info))
-    logger.debug("3. Testing query of own service...")
-    queried_info = r.get_service_info("_http._tcp.local.", name + "._http._tcp.local.")
-    if queried_info:
-        expected = {'127.0.0.1'}
-        bb = {(queried_info.parsed_addresses())[0]}
-        assert bb == expected
-        logger.debug("   Getting self: %s" % (queried_info,))
-        logger.debug("   Query done.")
-        port_selected = queried_info.port
-    return port_selected
-
 if __name__ == '__main__':
     module_name = "Controller"
     # Create logger for this module
