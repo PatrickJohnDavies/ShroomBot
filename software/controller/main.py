@@ -4,7 +4,8 @@ from typing import Optional
 from fastapi import FastAPI
 import uvicorn
 import requests
-import multiprocessing
+import threading
+import queue
 from enum import Enum, auto
 
 CONTROLLER_PORT = 8000
@@ -23,7 +24,7 @@ class State(Enum):
 
 # Create logger for this module
 logger = logging.getLogger(__name__)
-queue = multiprocessing.Queue()
+queue = queue.Queue()
 app = FastAPI()
 
 
@@ -47,16 +48,14 @@ def read_item():
     return {"ok"}
 
 
-class Controller(multiprocessing.Process):
-    queue
-    state
-
-    def __init__(self, queue):
-        multiprocessing.Process.__init__(self)
+class Controller():
+    def __init__(self):
         self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.DEBUG)
-        self.queue = queue
+        # self.logger.setLevel(logging.DEBUG)
+        # self.queue = queue
         self.state = State.INITIALIZE
+        thread = threading.Thread(target=self.run)
+        thread.start()
 
     def run(self):
         do_run = True
@@ -66,8 +65,8 @@ class Controller(multiprocessing.Process):
                 self.logger.debug('Entered State.INITIALIZE')
                 self.state = State.IDLE
             elif self.state == State.IDLE:
-                self.logger.debug('Entered State.IDLE')
-                self.logger.debug(f'queue size = {queue.qsize()}')
+                # self.logger.debug('Entered State.IDLE')
+                # self.logger.debug(f'queue size = {queue.qsize()}')
                 if not queue.empty() and queue.get() == 'start':
                     self.state = State.START
             elif self.state == State.START:
@@ -94,10 +93,7 @@ if __name__ == "__main__":
     logger.debug('Created logger')
 
     # Start the controller
-    controller = Controller(logger, queue)
-    controller.start()
+    controller = Controller()
 
     # Start the API server
     uvicorn.run(app, host="127.0.0.1", port=CONTROLLER_PORT, log_level="info")
-
-    controller.join()
