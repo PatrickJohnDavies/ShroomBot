@@ -1,7 +1,7 @@
 from http.client import OK
 from typing import Optional
 from enum import Enum
-from service import get_n_frame, get_mushrooms_coordinates
+from service import get_n_frame, get_mushrooms_coordinates, get_mushrooms_with_connected_components
 from fastapi import FastAPI
 import uvicorn
 import logging
@@ -31,8 +31,8 @@ async def read_mushrooms():
     '''Returns mushrooms caps coordinates on an image in 
     '''
     logger.debug('@app.get("/mushrooms")')
-    img = get_n_frame(1)
-    mushrooms_coordinates = get_mushrooms_coordinates(img)
+    # img = get_n_frame(1)
+    mushrooms_coordinates = get_mushrooms_with_connected_components()
     logger.debug(f'mushrooms_coordinates: {mushrooms_coordinates}')
     return {'frame': str(mushrooms_coordinates)}
 
