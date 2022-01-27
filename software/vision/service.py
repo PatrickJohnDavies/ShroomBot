@@ -89,10 +89,9 @@ def write_out_img(path, img):
     return cv2.imwrite(path, img)
 
 
-def get_mushrooms_with_connected_components():
-    # 1. Load image
-    img = cv2.imread('./data/train/2.jpeg')
-    # 2. Preprocess: Apply color mask -> invert -> grayscale -> denoise -> threshold -> connectedComponentsAlgo
+def get_mushrooms_with_connected_components(img):
+
+    # Preprocess: Apply color mask -> invert -> grayscale -> denoise -> threshold -> connectedComponentsAlgo
     masked_img = mask_with_color(img, lb_color=LB_BROWN_BGR, ub_color=UB_BROWN_BGR)
     masked_invert_img = image_invert(masked_img)
     masked_grayscale_img = image_to_grayscale(masked_invert_img)
@@ -101,6 +100,7 @@ def get_mushrooms_with_connected_components():
 
     # Add connected components information to original image
     output_img = img.copy()
+    mushrooms = []
     for i in range(1, numLabels):
         x = stats[i, cv2.CC_STAT_LEFT]
         y = stats[i, cv2.CC_STAT_TOP]
@@ -111,4 +111,8 @@ def get_mushrooms_with_connected_components():
         if area > 200 and area <1500:
             cv2.rectangle(output_img, (x, y), (x + w, y + h), (0, 255, 0), 3)
             cv2.circle(output_img, (int(cX), int(cY)), 4, (0, 0, 255), -1)
+            mushrooms.append((i, cX, cY))
+
     write_out_img('./00_output.jpeg',output_img)
+
+    return mushrooms 
