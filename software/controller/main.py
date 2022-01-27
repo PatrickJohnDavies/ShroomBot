@@ -3,6 +3,8 @@
 #   python -m pip install fastapi, uvicorn, requests
 # Test routes with ie curl hostname.local:8000/lights/on
 
+import os
+import json
 import logging
 from typing import Optional
 from fastapi import FastAPI
@@ -170,7 +172,25 @@ if __name__ == "__main__":
     logger.setLevel(logging.DEBUG)
     logger.debug('Created logger')
 
-    
+    # Load the config file
+    module_path = os.path.dirname(os.path.realpath(__file__))
+    config_fullfilename = os.path.abspath(os.path.join(module_path, "..", "..", "config.txt"))
+    logger.debug(f'Checking for config file at: {config_fullfilename}')
+    if os.path.isfile(config_fullfilename):
+        json_file = open(config_fullfilename)
+        config = json.load(json_file)
+        json_file.close()
+        logger.debug('Config file found.')
+    else:
+        logger.debug('No config file found. Creating a default one.')
+        json_file = open(config_fullfilename, 'w')
+        config = {'controller_hostname': '0.0.0.0', 'controller_port': '8000', 'arm_hostname': '127.0.0.1', 'arm_port': '8001', 'vision_hostname': '127.0.0.1', 'vision_port': '8002', 'enviroment_hostname': '127.0.0.1', 'enviroment_port': '8003'}
+        jstr = json.dumps(config, ensure_ascii=False, indent=4)
+        json_file.write(jstr)
+        json_file.close()
+    logger.debug(f'Config is: {config}')
+
+    # Setup GPIO
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(fan_pin, GPIO.OUT)
     GPIO.output(fan_pin, GPIO.LOW)
@@ -179,5 +199,4 @@ if __name__ == "__main__":
     controller = Controller()
     
     # Start the API server
-    # uvicorn.run(app, host="127.0.0.1", port=CONTROLLER_PORT, log_level="info")
-    uvicorn.run(app, host="0.0.0.0", port=CONTROLLER_PORT, log_level="info")
+    uvicorn.run(app, host=config['controller_hostname'], port=int(config['controller_port']), log_level="info")
