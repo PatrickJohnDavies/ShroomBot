@@ -104,7 +104,7 @@ class View(multiprocessing.Process):
         height = 500
         root.geometry(f'{(width):.0f}x{(height):.0f}')
         s = tkinter.ttk.Style()
-        theme_fullfilename = os.path.join(self.project_path, f'libraries\\ttk-Breeze/breeze.tcl')
+        theme_fullfilename = os.path.join(self.project_path, f'libraries/ttk-Breeze/breeze.tcl')
         root.tk.call('source', theme_fullfilename)
         root.title("ShroomBot")
         root.protocol('WM_DELETE_WINDOW', self.onExit)
