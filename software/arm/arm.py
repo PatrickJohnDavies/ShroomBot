@@ -17,5 +17,6 @@ class Coordinate(BaseModel):
 @app.post("/pick/")
 async def create_pick(coordinate: Coordinate):
     ## TODO: Create a background test that executes the pick motions
+    ## TODO: Define status codes that help us return appropriately
     print("We are picking {},{}".format(coordinate.x, coordinate.y))
 
