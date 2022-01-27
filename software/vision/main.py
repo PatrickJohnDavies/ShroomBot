@@ -13,6 +13,15 @@ VISION_PORT = 8002
 
 app = FastAPI()
 logger = logging.getLogger(__name__)
+# create formatter
+log_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# create console handler and set level to debug
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+ch.setFormatter(log_formatter)
+logger.addHandler(ch)
+ch.setLevel(logging.DEBUG)
+logger.setLevel(logging.DEBUG)
 
 
 class AnalyzeStatus(Enum):
@@ -56,15 +65,5 @@ async def read_analyze(item_id: int, q: Optional[str] = None):
 
 
 if __name__ == "__main__":
-    # create formatter
-    log_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    # create console handler and set level to debug
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
-    ch.setFormatter(log_formatter)
-    logger.addHandler(ch)
-    ch.setLevel(logging.DEBUG)
-    logger.setLevel(logging.DEBUG)
-
     # Start the API server
     uvicorn.run(app, host="127.0.0.1", port=VISION_PORT, log_level="info")
