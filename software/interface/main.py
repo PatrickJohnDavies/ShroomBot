@@ -1,26 +1,3 @@
-"""
-V                            C                            T
-connect(pw) ->
-                            loadCredentials()
-                            or
-                            <- create()
-
-
-backtest start ->
-                            backtest start ->
-                                                        create
-                                                        <- id
-
-
-
-python -m pip install matplotlib
-
-.\env_w\Scripts\activate
-python -m pip freeze > requirements.txt
-python -m pip install -r requirements.txt
-
-"""
-
 import os
 import sys
 import logging

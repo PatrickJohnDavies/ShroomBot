@@ -1,4 +1,7 @@
 
+# Install libraries with:
+#   python -m pip install fastapi, uvicorn, requests
+
 import logging
 from operator import truediv
 from typing import Optional
@@ -77,10 +80,11 @@ class Controller():
             elif self.state == State.RUNNING:
                 # Check if 10 seconds have passed and call the computer vision module
                 if time.perf_counter() - self.curr_time >= 10:
-                    logger.debug("Execetuing the detect and pick operation")
+                    logger.debug("Executing the detect and pick operation")
                     self.curr_time = time.perf_counter()
                     try:
                         potential_coordinates = self.detect()
+                        logger.debug(f'potential_coordinates = {potential_coordinates}')
                         if potential_coordinates == None:
                             continue
                         self.pick(potential_coordinates)
@@ -91,18 +95,15 @@ class Controller():
                 logger.debug('Entered State.STOPPED')
 
     def detect(self) -> Optional[dict]:
-        r = requests.post(f'http://127.0.0.1:{VISION_PORT}/mushrooms')
+        r = requests.get(f'http://127.0.0.1:{VISION_PORT}/mushrooms/random')
         mushroom_coordinates = r.json()['frame']
-
         if len(mushroom_coordinates) == 0:
             return None
-
         return mushroom_coordinates[0]
 
     def pick(self, coordinates) -> Optional[int]: # int represents status code
         r = requests.post(f'http://{ARM_IP}:{VISION_PORT}/pick', data=coordinates)
         status_code = r.json()['status_code']
-
         if status_code == 0:
             print("Arm is moving toward target")
         elif status_code == 1:
