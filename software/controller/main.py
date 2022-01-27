@@ -176,7 +176,7 @@ if __name__ == "__main__":
     else:
         logger.debug('No config file found. Creating a default one.')
         json_file = open(config_fullfilename, 'w')
-        config = {'controller_hostname': '0.0.0.0', 'controller_port': '8000', 'arm_hostname': '127.0.0.1', 'arm_port': '8001', 'vision_hostname': '127.0.0.1', 'vision_port': '8002', 'enviroment_hostname': '127.0.0.1', 'enviroment_port': '8003'}
+        config = {'controller_hostname': 'raspberrypi.local', 'controller_port': '8000', 'arm_hostname': 'raspberrypi.local', 'arm_port': '8001', 'vision_hostname': 'raspberrypi.local', 'vision_port': '8002', 'enviroment_hostname': 'esp32.local', 'enviroment_port': '8003'}
         jstr = json.dumps(config, ensure_ascii=False, indent=4)
         json_file.write(jstr)
         json_file.close()
@@ -191,4 +191,4 @@ if __name__ == "__main__":
     controller = Controller()
     
     # Start the API server
-    uvicorn.run(app, host=config['controller_hostname'], port=int(config['controller_port']), log_level="info")
+    uvicorn.run(app, host='0.0.0.0', port=int(config['controller_port']), log_level="info")
