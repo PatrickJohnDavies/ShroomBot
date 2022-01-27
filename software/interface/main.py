@@ -1,48 +1,23 @@
 import os
-import sys
+import json
 import logging
-
 import tkinter
 import tkinter.simpledialog
 from tkinter import ttk
 import multiprocessing
-
 import requests
 
-# CONTROLLER_HOSTNAME = 'shroombot_controller.local'
-CONTROLLER_HOSTNAME = 'cmio0.local'
-# CONTROLLER_HOSTNAME = '127.0.0.1'
-CONTROLLER_PORT = 8000
-# ARM_HOSTNAME = 'shroombot_controller.local'
-ARM_HOSTNAME = '127.0.0.1'
-ARM_PORT = 8001
-# VISION_HOSTNAME = 'WhatIsItsHostname.local?'
-VISION_HOSTNAME = '127.0.0.1'
-VISION_PORT = 8002
-ENVIROMENT_HOSTNAME = 'esp32.local?'
-ENVIROMENT_PORT = 8003
 
 class View(multiprocessing.Process):
-    logger = None
+    # logger = None
     state = 'connect'
 
-    def __init__(self):
+    def __init__(self, config):
         multiprocessing.Process.__init__(self)
+        self.logger = logging.getLogger(__name__)
+        self.config = config
 
     def initSystem(self):
-        # Create logger for this module
-        View.logger = logging.getLogger(__name__)
-        # create formatter
-        log_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        # create console handler and set level to debug
-        ch = logging.StreamHandler()
-        ch.setLevel(logging.DEBUG)
-        ch.setFormatter(log_formatter)
-        View.logger.addHandler(ch)
-        ch.setLevel(logging.DEBUG)
-        View.logger.setLevel(logging.DEBUG)
-        View.logger.debug('Created logger')
-
         self.project_path = os.path.dirname(os.path.abspath(__file__))
 
     def run(self):
@@ -110,7 +85,7 @@ class View(multiprocessing.Process):
 
         # Control frame
         root.grid_rowconfigure(0, weight=1)
-        self.control_frame = View.ControlFrame(root)
+        self.control_frame = View.ControlFrame(root, self.config)
         self.control_frame.root.grid(row=0, column=0, sticky="nesw")
         # self.doEnable(self.control_frame, False)
 
@@ -137,7 +112,8 @@ class View(multiprocessing.Process):
         self.state = 'shutdown'
 
     class ControlFrame():
-        def __init__(self, master):
+        def __init__(self, master, config):
+            self.config = config
             self.root = tkinter.Frame(master, bg='yellow')
             label = tkinter.Label(self.root, text="control frame")
             label.grid(row=0, column=0)
@@ -154,30 +130,30 @@ class View(multiprocessing.Process):
 
         def startstopButtonCallback(self, button):
             if button['text'] == 'Start':
-                r = requests.get(f'http://{CONTROLLER_HOSTNAME}:{CONTROLLER_PORT}/start')
+                r = requests.get(f"http://{self.config['controller_hostname']}:{self.config['controller_port']}/start")
                 button['text'] = 'Stop'
             elif button['text'] == 'Stop':
-                r = requests.get(f'http://{CONTROLLER_HOSTNAME}:{CONTROLLER_PORT}/stop')
+                r = requests.get(f"http://{self.config['controller_hostname']}:{self.config['controller_port']}/stop")
                 button['text'] = 'Start'
             else:
                 raise 'Unkown state'
 
         def lightButtonCallback(self, button):
             if button['text'] == 'On':
-                r = requests.get(f'http://{CONTROLLER_HOSTNAME}:{CONTROLLER_PORT}/lights/on')
+                r = requests.get(f"http://{self.config['controller_hostname']}:{self.config['controller_port']}/lights/on")
                 button['text'] = 'Off'
             elif button['text'] == 'Off':
-                r = requests.get(f'http://{CONTROLLER_HOSTNAME}:{CONTROLLER_PORT}/lights/off')
+                r = requests.get(f"http://{self.config['controller_hostname']}:{self.config['controller_port']}/lights/off")
                 button['text'] = 'On'
             else:
                 raise 'Unkown state'
 
         def fanButtonCallback(self, button):
             if button['text'] == 'On':
-                r = requests.get(f'http://{CONTROLLER_HOSTNAME}:{CONTROLLER_PORT}/fan/on')
+                r = requests.get(f"http://{self.config['controller_hostname']}:{self.config['controller_port']}/fan/on")
                 button['text'] = 'Off'
             elif button['text'] == 'Off':
-                r = requests.get(f'http://{CONTROLLER_HOSTNAME}:{CONTROLLER_PORT}/fan/off')
+                r = requests.get(f"http://{self.config['controller_hostname']}:{self.config['controller_port']}/fan/off")
                 button['text'] = 'On'
             else:
                 raise 'Unkown state'
@@ -211,6 +187,39 @@ class View(multiprocessing.Process):
 
 
 if __name__ == '__main__':
-    view = View()
+    # Create logger for this module
+    logger = logging.getLogger(__name__)
+    # create formatter
+    log_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    # create console handler and set level to debug
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+    ch.setFormatter(log_formatter)
+    logger.addHandler(ch)
+    ch.setLevel(logging.DEBUG)
+    logger.setLevel(logging.DEBUG)
+    logger.debug('Created logger')
+
+    # Load the config file
+    module_path = os.path.dirname(os.path.realpath(__file__))
+    config_fullfilename = os.path.abspath(os.path.join(module_path, "..", "..", "config.txt"))
+    logger.debug(f'Checking for config file at: {config_fullfilename}')
+    if os.path.isfile(config_fullfilename):
+        json_file = open(config_fullfilename)
+        config = json.load(json_file)
+        json_file.close()
+        logger.debug('Config file found.')
+    else:
+        logger.debug('No config file found. Creating a default one.')
+        json_file = open(config_fullfilename, 'w')
+        config = {'controller_hostname': 'raspberrypi.local', 'controller_port': '8000', 'arm_hostname': 'raspberrypi.local',
+                  'arm_port': '8001', 'vision_hostname': '127.0.0.1', 'vision_port': '8002',
+                  'enviroment_hostname': 'esp32.local', 'enviroment_port': '8003'}
+        jstr = json.dumps(config, ensure_ascii=False, indent=4)
+        json_file.write(jstr)
+        json_file.close()
+    logger.debug(f'Config is: {config}')
+
+    view = View(config)
     view.start()
     view.join()
