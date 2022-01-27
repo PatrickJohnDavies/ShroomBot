@@ -38,7 +38,7 @@ async def read_root():
 @app.get("/mushrooms")
 async def read_mushrooms():
     '''Returns mushroom id, centroid X and Y coordinates
-    Eg. (mushroom_num, cX, cY)
+    Eg. (mushroom_id, cX, cY)
     '''
     logger.debug('@app.get("/mushrooms")')
     img = get_n_frame(1)
