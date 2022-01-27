@@ -1,9 +1,9 @@
 
 # Install libraries with:
 #   python -m pip install fastapi, uvicorn, requests
+# Test routes with eg curl cmio0.local:8000/lights/on
 
 import logging
-from operator import truediv
 from typing import Optional
 from fastapi import FastAPI
 import uvicorn
@@ -12,8 +12,11 @@ import threading
 import queue
 from enum import Enum, auto
 import time
-from multiprocessing import Process
-import asyncio
+import RPi.GPIO as GPIO
+# Neopixels
+import time
+import board
+import neopixel
 
 CONTROLLER_PORT = 8000
 ARM_PORT = 8001
@@ -30,7 +33,21 @@ class State(Enum):
 
 # Create logger for this module
 logger = logging.getLogger(__name__)
+# Queue for passing data from FastAPI to Controller
 queue = queue.Queue()
+
+# Neopixel setup
+# Choose an open pin connected to the Data In of the NeoPixel strip, i.e. board.D18
+# NeoPixels must be connected to D10, D12, D18 or D21 to work.
+pixel_pin = board.D10
+num_pixels = 16
+ORDER = neopixel.GRB
+pixels = neopixel.NeoPixel(pixel_pin, num_pixels, brightness=0.2, auto_write=False, pixel_order=ORDER)
+
+# IO pins
+fan_pin = 9 # Broadcom pin 9
+
+# API routes
 app = FastAPI()
 
 
@@ -42,16 +59,42 @@ def read_root():
 @app.get("/start")
 def read_item():
     logger.debug('@app.get("/start")')
-    queue.put('start')
+    queue.put('/start')
     # r = requests.get(f'http://127.0.0.1:{VISION_PORT}/start')
     return {"ok"}
-
 
 @app.get("/stop")
 def read_item():
     logger.debug('@app.get("/stop")')
-    queue.put('stop')
+    queue.put('/stop')
     return {"ok"}
+
+@app.get("/lights/on")
+def read_item():
+    logger.debug('@app.get("/lights/on")')
+    pixels.fill((255, 0, 0))
+    pixels.show()
+    return {"ok"}
+
+@app.get("/lights/off")
+def read_item():
+    logger.debug('@app.get("/lights/off")')
+    pixels.fill((0, 0, 0))
+    pixels.show()
+    return {"ok"}
+
+@app.get("/fan/on")
+def read_item():
+    logger.debug('@app.get("/fan/on")')
+    GPIO.output(fan_pin, GPIO.HIGH)
+    return {"ok"}
+
+@app.get("/fan/off")
+def read_item():
+    logger.debug('@app.get("/fan/off")')
+    GPIO.output(fan_pin, GPIO.LOW)
+    return {"ok"}
+    
 
 
 class Controller():
@@ -75,7 +118,7 @@ class Controller():
             elif self.state == State.IDLE:
                 # self.logger.debug('Entered State.IDLE')
                 # self.logger.debug(f'queue size = {queue.qsize()}')
-                if not queue.empty() and queue.get() == 'start':
+                if not queue.empty() and queue.get() == '/start':
                     self.state = State.RUNNING
             elif self.state == State.RUNNING:
                 # Check if 10 seconds have passed and call the computer vision module
@@ -123,8 +166,14 @@ if __name__ == "__main__":
     logger.setLevel(logging.DEBUG)
     logger.debug('Created logger')
 
+    
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(fan_pin, GPIO.OUT)
+    GPIO.output(fan_pin, GPIO.LOW)
+
     # Start the controller
     controller = Controller()
     
     # Start the API server
-    uvicorn.run(app, host="127.0.0.1", port=CONTROLLER_PORT, log_level="info")
+    # uvicorn.run(app, host="127.0.0.1", port=CONTROLLER_PORT, log_level="info")
+    uvicorn.run(app, host="0.0.0.0", port=CONTROLLER_PORT, log_level="info")
