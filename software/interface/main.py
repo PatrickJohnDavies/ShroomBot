@@ -9,7 +9,17 @@ import multiprocessing
 
 import requests
 
+# CONTROLLER_HOSTNAME = 'shroombot_controller.local'
+CONTROLLER_HOSTNAME = 'cmio0.local'
+# CONTROLLER_HOSTNAME = '127.0.0.1'
 CONTROLLER_PORT = 8000
+# ARM_HOSTNAME = 'shroombot_controller.local'
+ARM_HOSTNAME = '127.0.0.1'
+ARM_PORT = 8001
+# VISION_HOSTNAME = 'WhatIsItsHostname.local?'
+VISION_HOSTNAME = '127.0.0.1'
+VISION_PORT = 8002
+ENVIROMENT_HOSTNAME = 'esp32.local?'
 ENVIROMENT_PORT = 8003
 
 class View(multiprocessing.Process):
@@ -45,7 +55,6 @@ class View(multiprocessing.Process):
 
     def process(self):
         self.processState()
-        self.processSocket()
         self.root.after(10, self.process)
 
     def processState(self):
@@ -60,9 +69,6 @@ class View(multiprocessing.Process):
             self.state = 'wait'
         elif self.state == 'disconnected':
             pass
-
-    def processSocket(self):
-        pass
 
     def doEnable(parent, status):
         child_list = parent.winfo_children()
@@ -127,6 +133,7 @@ class View(multiprocessing.Process):
         # self.doEnable(self.status_frame, False)
 
     def onExit(self):
+        View.logger.debug('onExit')
         self.state = 'shutdown'
 
     class ControlFrame():
@@ -142,22 +149,35 @@ class View(multiprocessing.Process):
             lights_button = tkinter.Button(self.root, text='On', command=lambda: self.lightButtonCallback(lights_button))
             lights_button.grid(row=0, column=2)
 
+            fan_button = tkinter.Button(self.root, text='On', command=lambda: self.fanButtonCallback(fan_button))
+            fan_button.grid(row=0, column=3)
+
         def startstopButtonCallback(self, button):
             if button['text'] == 'Start':
-                r = requests.get(f'http://127.0.0.1:{CONTROLLER_PORT}/start')
+                r = requests.get(f'http://{CONTROLLER_HOSTNAME}:{CONTROLLER_PORT}/start')
                 button['text'] = 'Stop'
             elif button['text'] == 'Stop':
-                r = requests.get(f'http://127.0.0.1:{CONTROLLER_PORT}/stop')
+                r = requests.get(f'http://{CONTROLLER_HOSTNAME}:{CONTROLLER_PORT}/stop')
                 button['text'] = 'Start'
             else:
                 raise 'Unkown state'
 
         def lightButtonCallback(self, button):
             if button['text'] == 'On':
-                r = requests.get(f'http://127.0.0.1:{ENVIROMENT_PORT}/lights/on')
+                r = requests.get(f'http://{CONTROLLER_HOSTNAME}:{CONTROLLER_PORT}/lights/on')
                 button['text'] = 'Off'
             elif button['text'] == 'Off':
-                r = requests.get(f'http://127.0.0.1:{ENVIROMENT_PORT}/lights/off')
+                r = requests.get(f'http://{CONTROLLER_HOSTNAME}:{CONTROLLER_PORT}/lights/off')
+                button['text'] = 'On'
+            else:
+                raise 'Unkown state'
+
+        def fanButtonCallback(self, button):
+            if button['text'] == 'On':
+                r = requests.get(f'http://{CONTROLLER_HOSTNAME}:{CONTROLLER_PORT}/fan/on')
+                button['text'] = 'Off'
+            elif button['text'] == 'Off':
+                r = requests.get(f'http://{CONTROLLER_HOSTNAME}:{CONTROLLER_PORT}/fan/off')
                 button['text'] = 'On'
             else:
                 raise 'Unkown state'
@@ -180,13 +200,6 @@ class View(multiprocessing.Process):
             self.root = tkinter.Frame(master, bg='green')
             label = tkinter.Label(self.root, text="video frame")
             label.grid(row=0, column=0)
-            # fig = Figure()
-            # matplotlib.pyplot.draw()
-            # self.root.update()
-            # self.root.update_idletasks()
-            #
-            # self.study_plot.clear()
-            # self.study_plot.plot(prices['datetime'], study['value'], color='black')
 
     class StatusFrame():
         def __init__(self, master):
