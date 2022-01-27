@@ -10,6 +10,7 @@ import multiprocessing
 import requests
 
 CONTROLLER_PORT = 8000
+ENVIROMENT_PORT = 8003
 
 class View(multiprocessing.Process):
     logger = None
@@ -134,9 +135,12 @@ class View(multiprocessing.Process):
             label = tkinter.Label(self.root, text="control frame")
             label.grid(row=0, column=0)
 
-            startstop_button = tkinter.Button(self.root, text='Start', command=lambda: self.startstopButtonCallback(startstop_button), bg='green')
+            startstop_button = tkinter.Button(self.root, text='Start', command=lambda: self.startstopButtonCallback(startstop_button))
             # stop_button['state'] = tkinter.DISABLED
             startstop_button.grid(row=0, column=1)
+
+            lights_button = tkinter.Button(self.root, text='On', command=lambda: self.lightButtonCallback(lights_button))
+            lights_button.grid(row=0, column=2)
 
         def startstopButtonCallback(self, button):
             if button['text'] == 'Start':
@@ -145,6 +149,16 @@ class View(multiprocessing.Process):
             elif button['text'] == 'Stop':
                 r = requests.get(f'http://127.0.0.1:{CONTROLLER_PORT}/stop')
                 button['text'] = 'Start'
+            else:
+                raise 'Unkown state'
+
+        def lightButtonCallback(self, button):
+            if button['text'] == 'On':
+                r = requests.get(f'http://127.0.0.1:{ENVIROMENT_PORT}/lights/on')
+                button['text'] = 'Off'
+            elif button['text'] == 'Off':
+                r = requests.get(f'http://127.0.0.1:{ENVIROMENT_PORT}/lights/off')
+                button['text'] = 'On'
             else:
                 raise 'Unkown state'
 
