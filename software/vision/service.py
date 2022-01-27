@@ -5,7 +5,7 @@ from cgitb import grey
 import cv2
 import numpy as np
 from constants import MINRADIUS, MAXRADIUS, DP, MINDIST, BLUE_COLOR, GREEN_COLOR, THICKNESS, FILL, FIFTY, LB_BROWN_BGR, UB_BROWN_BGR, MAX_AREA, MIN_AREA
-
+from datetime import datetime
 
 def get_n_frame(n_frame):
     '''Returns n_frame from videocam 
@@ -113,6 +113,6 @@ def get_mushrooms_with_connected_components(img):
             cv2.circle(output_img, (int(cX), int(cY)), 4, (0, 0, 255), -1)
             mushrooms.append((i, cX, cY))
 
-    write_out_img('./00_output.jpeg',output_img)
+    write_out_img('./{}.jpeg'.format(datetime.now().strftime("%m_%d_%Y_%H:%M:%S")),output_img)
 
     return mushrooms 
