@@ -1,6 +1,6 @@
 
 # Install libraries with:
-#   python -m pip install fastapi, uvicorn, requests
+#   python -m pip install fastapi, uvicorn, requests, scd30_i2c
 # Test routes with ie curl hostname.local:8000/lights/on
 
 import os
@@ -19,7 +19,7 @@ import RPi.GPIO as GPIO
 import time
 import board
 import neopixel
-
+from scd30_i2c import SCD30
 
 class State(Enum):
     INITIALIZE = auto()
@@ -92,6 +92,15 @@ def read_item():
     logger.debug('@app.get("/fan/off")')
     GPIO.output(fan_pin, GPIO.LOW)
     return {"ok"}
+
+@app.get("/co2")
+def read_item():
+    logger.debug('@app.get("/co2")')
+    if scd30.get_data_ready():
+        m = scd30.read_measurement()
+        if m is not None:
+            logger.debug(f"CO2: {m[0]:.2f}ppm, temp: {m[1]:.2f}'C, rh: {m[2]:.2f}%")
+    return {"value": f"{m[0]:.2f}"}
     
 
 
@@ -186,6 +195,11 @@ if __name__ == "__main__":
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(fan_pin, GPIO.OUT)
     GPIO.output(fan_pin, GPIO.LOW)
+
+    # Setup the CO2 sensor
+    scd30 = SCD30()
+    # scd30.set_measurement_interval(2)
+    # scd30.start_periodic_measurement()
 
     # Start the controller
     controller = Controller()
