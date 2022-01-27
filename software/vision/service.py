@@ -59,25 +59,45 @@ def get_mushrooms_coordinates(img):
     return shroom_caps
 
 def mask_with_color(img):
-    hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    lower_color = np.uint8([[[159,108,192]]])
-    upper_color = np.uint8([[[84,67,103]]])
-    lower_color_hsv = cv2.cvtColor(lower_color, cv2.COLOR_BGR2HSV)
-    upper_color_hsv = cv2.cvtColor(upper_color, cv2.COLOR_BGR2HSV)
-    mask = cv2.inRange(hsv_img,lower_color_hsv,upper_color_hsv)
-    print('Color Mask Works: {}'.format(1 if 0>=sum(sum(mask)) else 0))
+    
+    lower_color_BGR = np.array([125,170,124])
+    upper_color_BGR = np.array([55,86,114])
+
+    lower_color_BGR_2 = np.array([132,164,132])
+    upper_color_BGR_2 = np.array([78,53,78])
+    
+    mask = cv2.inRange(img,
+                       upper_color_BGR,
+                       lower_color_BGR_2)
+
+    mask_2 = cv2.inRange(img,
+                         upper_color_BGR_2,
+                         lower_color_BGR)
+
+    print('Color Mask Works: {}'.format(1 if 0>sum(sum(mask)) else 0))
     result = cv2.bitwise_and(img, img, mask = mask)
+    # result = cv2.bitwise_and(result, result, mask = mask_2)
+    cv2.imwrite('./00_frame.jpeg', img)
+    cv2.imwrite('./00_mask.jpeg', mask)
+    cv2.imwrite('./00_res_mask.jpeg', result)
+    cv2.imwrite('./00_mask_2.jpeg', result)
     return result 
 
 def get_mushrooms_with_connected_components():
     original_img = cv2.imread('./data/train/2.jpeg')
-    img = mask_with_color(original_img)
-    gray = image_to_grayscale(img)
-    thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
+    # img = cv2.fastNlMeansDenoising(original_img)
+    # cv2.imwrite('./00_denoised.jpeg', img)
+    masked_img = mask_with_color(original_img)
+    gray = image_to_grayscale(masked_img)
+    masked_invert = cv2.bitwise_not(masked_img)
+    gray_invert = image_to_grayscale(masked_invert)
+    cv2.imwrite('./00_grayscale.jpeg', gray)
+    cv2.imwrite('./00_gray_inverted.jpeg', gray_invert)
+    thresh = cv2.threshold(gray_invert, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
     output = cv2.connectedComponentsWithStats(thresh, 4, cv2.CV_32S)
     (numLabels, labels, stats, centroids) = output
     # Filter connected components by area
-    output_img = gray.copy()
+    output_img = original_img.copy()
     print('Identified components: {}'.format(len(labels)))
     for i in range(1, numLabels):
         x = stats[i, cv2.CC_STAT_LEFT]
@@ -90,5 +110,5 @@ def get_mushrooms_with_connected_components():
             cv2.rectangle(output_img, (x, y), (x + w, y + h), (0, 255, 0), 3)
             cv2.circle(output_img, (int(cX), int(cY)), 4, (0, 0, 255), -1)
     
-    cv2.imwrite('./00_test.jpg', output_img)
+    cv2.imwrite('./00_final_output.jpg', output_img)
     cv2.imwrite('./00_graypost.jpeg', gray)
