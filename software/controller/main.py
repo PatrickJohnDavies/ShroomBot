@@ -20,15 +20,6 @@ import time
 import board
 import neopixel
 
-# CONTROLLER_HOSTNAME = 'shroombot_controller'
-CONTROLLER_HOSTNAME = '127.0.0.1'
-CONTROLLER_PORT = 8000
-# ARM_HOSTNAME = 'shroombot_controller'
-ARM_HOSTNAME = '127.0.0.1'
-ARM_PORT = 8001
-# VISION_HOSTNAME = 'WhatIsItsHostname?'
-VISION_HOSTNAME = '127.0.0.1'
-VISION_PORT = 8002
 
 class State(Enum):
     INITIALIZE = auto()
@@ -41,6 +32,8 @@ class State(Enum):
 logger = logging.getLogger(__name__)
 # Queue for passing data from FastAPI to Controller
 queue = queue.Queue()
+# JSON config 
+config = None
 
 # Neopixel setup
 # Choose an open pin connected to the Data In of the NeoPixel strip, i.e. board.D18
@@ -66,7 +59,6 @@ def read_root():
 def read_item():
     logger.debug('@app.get("/start")')
     queue.put('/start')
-    # r = requests.get(f'http://127.0.0.1:{VISION_PORT}/start')
     return {"ok"}
 
 @app.get("/stop")
@@ -144,14 +136,14 @@ class Controller():
                 logger.debug('Entered State.STOPPED')
 
     def detect(self) -> Optional[dict]:
-        r = requests.get(f'http://{VISION_HOSTNAME}:{VISION_PORT}/mushrooms/random')
+        r = requests.get(f"http://{config['vision_hostname']}:{config['vision_port']}/mushrooms/random")
         mushroom_coordinates = r.json()['frame']
         if len(mushroom_coordinates) == 0:
             return None
         return mushroom_coordinates[0]
 
     def pick(self, coordinates) -> Optional[int]: # int represents status code
-        r = requests.post(f'http://{ARM_HOSTNAME}:{ARM_PORT}/pick', data=coordinates)
+        r = requests.post(f"http://{config['arm_hostname']}:{config['arm_port']}/pick", data=coordinates)
         status_code = r.json()['status_code']
         if status_code == 0:
             print("Arm is moving toward target")
