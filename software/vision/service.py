@@ -25,6 +25,22 @@ def get_n_frame(n_frame):
             break
 
 
+def get_video_stream():
+    cap = cv2.VideoCapture(0)
+    i = 0
+    while(cap.isOpened()):
+        ret, frame = cap.read()
+        # cv2.imshow('frame', frame)
+        frame = get_mushrooms_with_connected_components(frame, stream=True)
+        cv2.imshow('frame', frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+    
+    cap.release()
+    cv2.destroyAllWindows()
+
+
+
 def image_scaler(img, scale_pct):
     '''Returns image scaled as a percentage of the original size
     '''
@@ -89,7 +105,7 @@ def write_out_img(path, img):
     return cv2.imwrite(path, img)
 
 
-def get_mushrooms_with_connected_components(img):
+def get_mushrooms_with_connected_components(img, stream=False):
 
     # Preprocess: Apply color mask -> invert -> grayscale -> denoise -> threshold -> connectedComponentsAlgo
     masked_img = mask_with_color(img, lb_color=LB_BROWN_BGR, ub_color=UB_BROWN_BGR)
@@ -112,7 +128,12 @@ def get_mushrooms_with_connected_components(img):
             cv2.rectangle(output_img, (x, y), (x + w, y + h), (0, 255, 0), 3)
             cv2.circle(output_img, (int(cX), int(cY)), 4, (0, 0, 255), -1)
             mushrooms.append((i, cX, cY))
+    
+    if stream:
+        return output_img
+    else:
+        write_out_img('./{}.jpeg'.format(datetime.now().strftime("%m_%d_%Y_%H:%M:%S")),output_img)
+        return mushrooms 
 
-    write_out_img('./{}.jpeg'.format(datetime.now().strftime("%m_%d_%Y_%H:%M:%S")),output_img)
-
-    return mushrooms 
+if __name__ == '__main__':
+    get_video_stream()
