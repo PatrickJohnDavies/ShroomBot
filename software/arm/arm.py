@@ -13,9 +13,10 @@ import queue
 from enum import Enum, auto
 import RPi.GPIO as GPIO
 import time
+import requests
 
 ARM_PORT = 8001
-
+MOONRAKER_PORT = 7125
 
 class Coordinate(BaseModel):
     x: float
@@ -34,7 +35,7 @@ def read_root():
     return {"Hello": "World"}
 
 
-@app.post("/pick/")
+@app.post("/pick")
 async def create_pick(coordinate: Coordinate):
     ## TODO: Create a background test that executes the pick motions
     ## TODO: Define status codes that help us return appropriately
@@ -76,7 +77,8 @@ class Arm():
 
     # Function to pick a mushroom
     def pick(self, coordinate):
-        pass
+        if self.state == "busy":
+            return 
 
 class StepperDriver:
     def __init__(self, dir_pin, step_pin, limit_pin, ratio):
