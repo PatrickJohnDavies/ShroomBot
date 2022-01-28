@@ -44,6 +44,7 @@ async def create_pick(coordinate: Coordinate):
 class Arm():
     def __init__(self):
         self.logger = logging.getLogger(__name__)
+        self.state = "idle"
         thread = threading.Thread(target=self.run)
         thread.start()
 
@@ -57,15 +58,15 @@ class Arm():
 
     # Function to pick a mushroom
     def pick(self, coordinate):
-        # mm_x, mm_y = coordinate['x'], coordinate['y']
-        mid = 1 # to set
+        if self.state == "busy":
+            return 
+        
+        # INSERT TRANSFORMATION WORK HERE
+        px, py = coordinate['x'], coordinate['y']
+        tx, ty = px, py
 
-        filename = f"mushroom_{mid}.gcode"
-        # Create a file representing the gcode of the mushroom id
-        f = open("/home/pi/gcode_files/{}".format(filename), "w")
-        f.write("Hello world!")
-        f.close()
-
+        self.write_to_file(tx, ty, 50)
+        
         # Send the gcode file to job queue
         try:
             r = requests.post(f"http://localhost:{MOONRAKER_PORT}/server/job_queue/job?filenames={filename}")
@@ -92,6 +93,22 @@ class Arm():
         #      r = requests.post(f"http://localhost:{MOONRAKER_PORT}/server/job_queue/start")
         # except:
         #      self.logger.error("FAILED TO START THE JOB QUEUE")
+
+        self.state = "idle"
+    
+    def write_to_file(tx, ty, floor_height1):
+        filename = f"mushroom.gcode"
+        # Create a file representing the gcode of the mushroom id
+        f = open("/home/pi/gcode_files/{}".format(filename), "w")
+        f.write(f"G28")
+        f.write(f"G1 X{tx} Y{ty} Z{floor_height1}")
+        f.write(f"pick")
+        f.write(f"G1 Z{floor_height1}")
+        f.write(f"G28")
+        # f.write(f"G1 Z[{floor_height1 - 25}]")
+        
+        f.close()
+
 
 if __name__ == "__main__":
     # create formatter
