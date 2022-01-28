@@ -53,16 +53,15 @@ class Arm():
         while do_run:
             # Pull a coordinate from the queue and execute a pick on it
             if not queue.empty():
-                print("here")
                 coordinate = queue.get()
                 self.pick(coordinate)
 
     # Function to pick a mushroom
     def pick(self, coordinate):
         # mm_x, mm_y = coordinate['x'], coordinate['y']
-        mushroom_id = 1 # to set
+        mid = 1 # to set
 
-        filename = "mushroom_{mushroom_id}.gcode"
+        filename = f"mushroom_{mid}.gcode"
         # Create a file representing the gcode of the mushroom id
         f = open("/home/pi/gcode_files/{}".format(filename), "w")
         f.write("Hello world!")
@@ -71,6 +70,7 @@ class Arm():
         # Send the gcode file to job queue
         try:
             r = requests.post(f"http://localhost:{MOONRAKER_PORT}/server/job_queue/job?file_names={filename}")
+            logger.debug("Succesfully sent file to queue")
         except:
             self.logger.error("FAILED TO ADD TO JOB QUEUE")
 
