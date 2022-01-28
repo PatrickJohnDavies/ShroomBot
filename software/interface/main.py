@@ -108,7 +108,7 @@ class View(multiprocessing.Process):
         # self.doEnable(self.status_frame, False)
 
     def onExit(self):
-        View.logger.debug('onExit')
+        logger.debug('onExit')
         self.state = 'shutdown'
 
     class ControlFrame():
