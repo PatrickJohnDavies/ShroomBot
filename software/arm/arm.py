@@ -1,5 +1,4 @@
 from http.client import OK
-from msilib.schema import Error
 import re
 from tkinter import E
 from typing import Optional
@@ -73,7 +72,7 @@ class Arm():
         try:
             r = requests.post(f"http://localhost:{MOONRAKER_PORT}/server/job_queue/job?filenames={filename}")
             logger.debug("Succesfully sent file to queue")
-        except Error as err:
+        except BaseException as err:
             self.logger.error("FAILED TO ADD TO JOB QUEUE")
 
         # Validate the status andof the queue
@@ -85,7 +84,7 @@ class Arm():
             else:
                 print(jobs)
                 self.logger.debug("Successfuly seend the job to the queue")
-        except Error as err:
+        except BaseException as err:
             self.logger.error(err)
             self.logger.error("FAILED TO SEND REQUEST FOR JOB QUEUE")
 
