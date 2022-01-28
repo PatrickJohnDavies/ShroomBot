@@ -23,13 +23,13 @@ def runExample():
 
 		print("tVOC:\t%.3f\n" % mySensor.getTVOC())	
     
-    mySensor.read_ntc()
-    print("Measured Resistance: %.3f ohms" % mySensor.resistance)
+		mySensor.read_ntc()
+		print("Measured Resistance: %.3f ohms" % mySensor.resistance)
 
-    readTemperature = mySensor.temperature
-    print("Converted Temperature: %.2f deg C" % readTemperature)
+		readTemperature = mySensor.temperature
+		print("Converted Temperature: %.2f deg C" % readTemperature)
 
-    mySensor.set_environmental_data( 50, readTemperature)
+		mySensor.set_environmental_data( 50, readTemperature)
 
 		
 		time.sleep(1)
