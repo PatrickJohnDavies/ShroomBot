@@ -11,9 +11,10 @@ import threading
 import queue
 from enum import Enum, auto
 import time
+import requests
 
 ARM_PORT = 8001
-
+MOONRAKER_PORT = 7125
 
 class Coordinate(BaseModel):
     x: int
@@ -31,7 +32,7 @@ def read_root():
     return {"Hello": "World"}
 
 
-@app.post("/pick/")
+@app.post("/pick")
 async def create_pick(coordinate: Coordinate):
     ## TODO: Create a background test that executes the pick motions
     ## TODO: Define status codes that help us return appropriately
@@ -43,6 +44,7 @@ async def create_pick(coordinate: Coordinate):
 class Arm():
     def __init__(self):
         self.logger = logging.getLogger(__name__)
+        self.state = "idle"
         thread = threading.Thread(target=self.run)
         thread.start()
 
@@ -56,7 +58,56 @@ class Arm():
 
     # Function to pick a mushroom
     def pick(self, coordinate):
-        pass
+        if self.state == "busy":
+            return 
+        
+        # INSERT TRANSFORMATION WORK HERE
+        px, py = coordinate['x'], coordinate['y']
+        tx, ty = px, py
+
+        self.write_to_file(tx, ty, 50)
+        
+        # Send the gcode file to job queue
+        try:
+            r = requests.post(f"http://localhost:{MOONRAKER_PORT}/server/job_queue/job?filenames={filename}")
+            logger.debug("Succesfully sent file to queue")
+        except BaseException as err:
+            self.logger.error("FAILED TO ADD TO JOB QUEUE")
+
+        # Validate the status andof the queue
+        try:
+            r = requests.get(f"http://localhost:{MOONRAKER_PORT}/server/job_queue/status")
+            self.logger.debug(r.json())
+            jobs = r.json()['result']['queued_jobs']
+            if len(jobs) == 0:
+                self.logger.error("error: We are fuckedddddd no jobs were found")
+            else:
+                print(jobs)
+                self.logger.debug("Successfuly seend the job to the queue")
+        except BaseException as err:
+            self.logger.error(err)
+            self.logger.error("FAILED TO SEND REQUEST FOR JOB QUEUE")
+
+        # # Start the job queue
+        # try:
+        #      r = requests.post(f"http://localhost:{MOONRAKER_PORT}/server/job_queue/start")
+        # except:
+        #      self.logger.error("FAILED TO START THE JOB QUEUE")
+
+        self.state = "idle"
+    
+    def write_to_file(tx, ty, floor_height1):
+        filename = f"mushroom.gcode"
+        # Create a file representing the gcode of the mushroom id
+        f = open("/home/pi/gcode_files/{}".format(filename), "w")
+        f.write(f"G28")
+        f.write(f"G1 X{tx} Y{ty} Z{floor_height1}")
+        f.write(f"pick")
+        f.write(f"G1 Z{floor_height1}")
+        f.write(f"G28")
+        # f.write(f"G1 Z[{floor_height1 - 25}]")
+        
+        f.close()
 
 
 if __name__ == "__main__":
@@ -75,4 +126,4 @@ if __name__ == "__main__":
     controller = Arm()
 
     # Start the API server
-    uvicorn.run(app, host="127.0.0.1", port=ARM_PORT, log_level="info")
+    uvicorn.run(app, host="0.0.0.0", port=ARM_PORT, log_level="info")
