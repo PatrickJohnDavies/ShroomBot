@@ -1,6 +1,4 @@
 from http.client import OK
-import re
-from tkinter import E
 from typing import Optional
 from pydantic import BaseModel
 import logging
@@ -78,7 +76,8 @@ class Arm():
         # Validate the status andof the queue
         try:
             r = requests.get(f"http://localhost:{MOONRAKER_PORT}/server/job_queue/status")
-            jobs = r.json()['queued_jobs']
+            self.logger.debug(r.json())
+            jobs = r.json()['result']['queued_jobs']
             if len(jobs) == 0:
                 self.logger.error("error: We are fuckedddddd no jobs were found")
             else:
