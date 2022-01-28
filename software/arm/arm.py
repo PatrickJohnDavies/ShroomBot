@@ -108,4 +108,4 @@ if __name__ == "__main__":
     controller = Arm()
 
     # Start the API server
-    uvicorn.run(app, host="127.0.0.1", port=ARM_PORT, log_level="info")
+    uvicorn.run(app, host="0.0.0.0", port=ARM_PORT, log_level="info")
