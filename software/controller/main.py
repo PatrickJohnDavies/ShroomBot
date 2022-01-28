@@ -39,12 +39,13 @@ config = None
 # Choose an open pin connected to the Data In of the NeoPixel strip, i.e. board.D18
 # NeoPixels must be connected to D10, D12, D18 or D21 to work.
 pixel_pin = board.D10
-num_pixels = 16
+num_pixels = 30
 ORDER = neopixel.GRB
 pixels = neopixel.NeoPixel(pixel_pin, num_pixels, brightness=0.2, auto_write=False, pixel_order=ORDER)
 
 # IO pins
-fan_pin = 9 # Broadcom pin 9
+led_pin = 9 # Broadcom pin 9
+fan_pin = 27 # Broadcom pin 9
 
 # API routes
 app = FastAPI()
@@ -77,6 +78,8 @@ def read_item():
 @app.get("/lights/off")
 def read_item():
     logger.debug('@app.get("/lights/off")')
+    pixels.fill((0, 0, 0))
+    pixels.show()
     pixels.fill((0, 0, 0))
     pixels.show()
     return {"ok"}
@@ -161,6 +164,13 @@ class Controller():
         elif status_code:
             print("There was an error with picking the")
 
+def step(pin):
+    GPIO.output(pin, GPIO.LOW)
+    time.sleep(0.01)
+    GPIO.output(pin, GPIO.HIGH)
+    time.sleep(0.01)
+    GPIO.output(pin, GPIO.LOW)
+
 if __name__ == "__main__":
     # create formatter
     log_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -193,6 +203,9 @@ if __name__ == "__main__":
 
     # Setup GPIO
     GPIO.setmode(GPIO.BCM)
+    GPIO.setup(led_pin, GPIO.OUT)
+    GPIO.output(led_pin, GPIO.LOW)
+    
     GPIO.setup(fan_pin, GPIO.OUT)
     GPIO.output(fan_pin, GPIO.LOW)
 
@@ -204,5 +217,21 @@ if __name__ == "__main__":
     # Start the controller
     controller = Controller()
     
+    # pixels.fill((255, 0, 0, 0))
+    # pixels.show()
+    # pixels.fill((0, 0, 0, 255))
+    # pixels.show()
+    # pixels.fill((0, 255, 0, 0))
+    # pixels.show()
+    
+    pixels.fill((255, 0, 0))
+    pixels.show()
+    pixels.fill((0, 0, 255))
+    pixels.show()
+    pixels.fill((0, 255, 0))
+    pixels.show()
+    # pixels.fill((0, 0, 0))
+    # pixels.show()
+
     # Start the API server
     uvicorn.run(app, host='0.0.0.0', port=int(config['controller_port']), log_level="info")
