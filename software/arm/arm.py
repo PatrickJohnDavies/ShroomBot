@@ -53,6 +53,7 @@ class Arm():
         while do_run:
             # Pull a coordinate from the queue and execute a pick on it
             if not queue.empty():
+                print("here")
                 coordinate = queue.get()
                 self.pick(coordinate)
 
