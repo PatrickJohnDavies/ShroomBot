@@ -69,7 +69,7 @@ class Arm():
 
         # Send the gcode file to job queue
         try:
-            r = requests.post(f"http://localhost:{MOONRAKER_PORT}/server/job_queue/job?file_names={filename}")
+            r = requests.post(f"http://localhost:{MOONRAKER_PORT}/server/job_queue/job?filenames={filename}")
             logger.debug("Succesfully sent file to queue")
         except:
             self.logger.error("FAILED TO ADD TO JOB QUEUE")
