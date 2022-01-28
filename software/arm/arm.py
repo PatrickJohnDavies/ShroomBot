@@ -1,4 +1,5 @@
 from http.client import OK
+import re
 from typing import Optional
 from pydantic import BaseModel
 import logging
@@ -11,9 +12,10 @@ import threading
 import queue
 from enum import Enum, auto
 import time
+import requests
 
 ARM_PORT = 8001
-
+MOONRAKER_PORT = 7125
 
 class Coordinate(BaseModel):
     x: int
@@ -56,8 +58,38 @@ class Arm():
 
     # Function to pick a mushroom
     def pick(self, coordinate):
-        pass
+        # mm_x, mm_y = coordinate['x'], coordinate['y']
+        mushroom_id = 1 # to set
 
+        filename = "mushroom_{mushroom_id}.gcode"
+        # Create a file representing the gcode of the mushroom id
+        f = open("/home/pi/gcode_files/{}".format(filename), "w")
+        f.write("Hello world!")
+        f.close()
+
+        # Send the gcode file to job queue
+        try:
+            r = requests.post(f"http://localhost:{MOONRAKER_PORT}/server/job_queue/job?file_names={filename}")
+        except:
+            self.logger.error("FAILED TO ADD TO JOB QUEUE")
+
+        # Validate the status andof the queue
+        try:
+            r = requests.get(f"http://localhost:{MOONRAKER_PORT}/server/job_queue/status")
+            jobs = r.json()['queued_jobs']
+            if len(jobs) == 0:
+                self.logger.error("error: We are fuckedddddd no jobs were found")
+            else:
+                print(jobs)
+                self.logger.debug("Successfuly seend the job to the queue")
+        except:
+            self.logger.error("FAILED TO SEND REQUEST FOR JOB QUEUE")
+
+        # # Start the job queue
+        # try:
+        #      r = requests.post(f"http://localhost:{MOONRAKER_PORT}/server/job_queue/start")
+        # except:
+        #      self.logger.error("FAILED TO START THE JOB QUEUE")
 
 if __name__ == "__main__":
     # create formatter
